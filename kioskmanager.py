@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+from random import choice, randint
+from datetime import datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -11,26 +13,80 @@ class DBClient:
     def __init__(self, url):
         self.url = url
 
-    def order_request(self):
+    def order_request(self, data):
         try:
-            data = {"OR": {"icecream": "mint", "topping": "chocoball, cereal"}}
             headers = {"Content-Type": "application/json"}
             response = requests.post(self.url, headers=headers, data=json.dumps(data))
             response.raise_for_status()  # 요청이 성공했는지 확인
-            return response.json()
+            return response
+
         except requests.exceptions.RequestException as e:
-            print(f"주문 요청 처리 중 오류: {e}")
+            print(f"Request failed: {e}")
             return None
 
 
-if __name__ == "__main__":
-    url = "http://172.30.1.5:8000/kiosk"
-    dbclient = DBClient(url)
-    response = dbclient.order_request()
+def get_random_dates(n):
+    today = datetime.now()
+    start_date = today - timedelta(days=7)
+    random_dates = [
+        start_date
+        + timedelta(
+            days=randint(0, 7),
+            hours=randint(0, 23),
+            minutes=randint(0, 59),
+            seconds=randint(0, 59),
+        )
+        for _ in range(n)
+    ]
+    random_dates.sort()  # 날짜를 오름차순으로 정렬
+    return random_dates
 
-    if response:
-        print("Order ID:", response.get("orderId"))
-        print("Order IceCream:", response.get("icecream"))
-        print("Order Topping:", response.get("topping"))
-    else:
-        print("주문 요청에 실패했습니다.")
+
+def generate_orders(dbclient, n):
+    icecreams = ["mint", "choco", "strawberry"]
+    toppings = ["chocoball", "cereal", "oreo"]
+
+    # 가능한 토핑 조합
+    combinations = [
+        [],
+        [toppings[0]],
+        [toppings[1]],
+        [toppings[2]],
+        [toppings[0], toppings[1]],
+        [toppings[0], toppings[2]],
+        [toppings[1], toppings[2]],
+        [toppings[0], toppings[1], toppings[2]],
+    ]
+
+    # n개의 랜덤 날짜 생성
+    random_dates = get_random_dates(n)
+
+    # n개의 주문 생성
+    for attempt, order_time in enumerate(random_dates, 1):
+        icecream = choice(icecreams)
+        topping_combo = choice(combinations)
+        topping_str = ", ".join(topping_combo)
+        order_time_str = order_time.strftime("%Y-%m-%d %H:%M:%S")
+
+        data = {
+            "OR": {
+                "icecream": icecream,
+                "topping": topping_str,
+                "order_time": order_time_str,
+            }
+        }
+
+        response = dbclient.order_request(data)
+        if response:
+            responseData = response.json()
+            print(f"주문시도 {attempt}회:", responseData)
+        else:
+            print(f"주문시도 {attempt}회: 요청 실패")
+
+
+if __name__ == "__main__":
+    url = "http://0.0.0.0:8000/test"
+    dbclient = DBClient(url)
+
+    # 100개의 주문 생성
+    generate_orders(dbclient, 100)

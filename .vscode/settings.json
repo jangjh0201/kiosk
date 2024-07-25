@@ -1,5 +1,7 @@
 {
     "git.ignoreLimitWarning": true,
     // 가상환경 default로 실행
-    "python.defaultInterpreterPath": "/home/jangjh0201/venv/kiosk_venv/bin/python"
+    "python.defaultInterpreterPath": "/home/jangjh0201/venv/kiosk_venv/bin/python",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true
 }
