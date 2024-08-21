@@ -1,3 +1,4 @@
+import requests
 import os
 import sys
 import json
@@ -5,8 +6,6 @@ from random import choice, randint
 from datetime import datetime, timedelta
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-import requests
 
 
 class DBClient:
@@ -16,7 +15,19 @@ class DBClient:
     def order_request(self, data):
         try:
             headers = {"Content-Type": "application/json"}
-            response = requests.post(self.url, headers=headers, data=json.dumps(data))
+            response = requests.post(
+                self.url, headers=headers, data=json.dumps(data))
+            response.raise_for_status()  # 요청이 성공했는지 확인
+            return response
+
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            return None
+
+    def show_tables(self):
+        try:
+            response = requests.get(
+                self.url)
             response.raise_for_status()  # 요청이 성공했는지 확인
             return response
 
@@ -27,11 +38,11 @@ class DBClient:
 
 def get_random_dates(n):
     today = datetime.now()
-    start_date = today - timedelta(days=7)
+    start_date = today - timedelta(days=30)
     random_dates = [
         start_date
         + timedelta(
-            days=randint(0, 7),
+            days=randint(0, 30),
             hours=randint(0, 23),
             minutes=randint(0, 59),
             seconds=randint(0, 59),
@@ -85,8 +96,12 @@ def generate_orders(dbclient, n):
 
 
 if __name__ == "__main__":
-    url = "http://0.0.0.0:8000/test"
+    # url = "http://0.0.0.0:8000/test"
+    url = "http://0.0.0.0:8000/table"
     dbclient = DBClient(url)
 
     # 100개의 주문 생성
-    generate_orders(dbclient, 100)
+    # generate_orders(dbclient, 100)
+
+    # 테이블 조회
+    dbclient.show_tables()
