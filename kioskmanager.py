@@ -1,3 +1,4 @@
+import re
 import requests
 import os
 import sys
@@ -29,8 +30,28 @@ class DBClient:
             response = requests.get(
                 self.url)
             response.raise_for_status()  # 요청이 성공했는지 확인
+            print("응답 데이터:", response.json())
+            print(f"1번 테이블: {response.json()[0]}")
             return response
 
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            return None
+
+    def use_table_one(self):
+        try:
+            headers = {"Content-Type": "application/json"}
+            response = requests.patch(
+                self.url + "/1", headers=headers, json={"status": 0}
+            )
+            response.raise_for_status()  # 요청이 성공했는지 확인
+
+            # 응답 데이터를 JSON으로 파싱하여 출력
+            response_data = response.json()
+            print("응답 데이터:", response_data)
+            print(f"1번 테이블: {response_data[0]}")
+
+            return response
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
             return None
@@ -105,3 +126,6 @@ if __name__ == "__main__":
 
     # 테이블 조회
     dbclient.show_tables()
+
+    # 테이블 선택
+    # dbclient.use_table_one()
